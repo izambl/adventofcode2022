@@ -43,17 +43,11 @@ function play(hand1: string, hand2: string): number {
   return 0;
 }
 
-let totalScorePart01 = 0;
 const input01 = input.map(([opponent, player]) => [opponent, handEquivalency[player]]);
-for (const [hand1, hand2] of input01) {
-  totalScorePart01 += play(hand1, hand2);
-}
+const totalScorePart01 = input01.reduce((score, [hand1, hand2]) => score + play(hand1, hand2), 0);
 
-let totalScorePart02 = 0;
 const input02 = input.map(([oponent, neededResult]) => [oponent, results[oponent][neededResult]]);
-for (const [hand1, hand2] of input02) {
-  totalScorePart02 += play(hand1, hand2);
-}
+const totalScorePart02 = input02.reduce((score, [hand1, hand2]) => score + play(hand1, hand2), 0);
 
 process.stdout.write(`Part 01: ${totalScorePart01}\n`);
 process.stdout.write(`Part 02: ${totalScorePart02}\n`);
