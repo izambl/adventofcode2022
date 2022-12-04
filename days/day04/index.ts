@@ -1,5 +1,5 @@
-// https://adventofcode.com/2022/day/3
-// Day 3: Rucksack Reorganization
+// https://adventofcode.com/2022/day/4
+// Day 4: Camp Cleanup
 
 import { readInput } from '../../common/index';
 
