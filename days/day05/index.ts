@@ -46,8 +46,8 @@ instructions.split('\n').forEach((instruction: string) => {
   part02Crates[Number(to)] = [...part02Crates[Number(to)], ...items];
 });
 
-const part01 = Object.keys(part01Crates).reduce((total, crate: any) => `${total}${part01Crates[crate].at(-1)}`, '');
-const part02 = Object.keys(part02Crates).reduce((total, crate: any) => `${total}${part02Crates[crate].at(-1)}`, '');
+const part01 = Object.keys(part01Crates).reduce((total, crate: string) => `${total}${part01Crates[Number(crate)].at(-1)}`, '');
+const part02 = Object.keys(part02Crates).reduce((total, crate: string) => `${total}${part02Crates[Number(crate)].at(-1)}`, '');
 
 process.stdout.write(`Part 01: ${part01}\n`);
 process.stdout.write(`Part 02: ${part02}\n`);
