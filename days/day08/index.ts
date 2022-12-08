@@ -33,8 +33,8 @@ for (let y = 1; y < input.length - 1; y++) {
 }
 
 let part02 = 0;
-for (let y = 0; y < input.length; y++) {
-  for (let x = 0; x < input[y].length; x++) {
+for (let y = 1; y < input.length - 1; y++) {
+  for (let x = 1; x < input[y].length - 1; x++) {
     const treeScore = [0, 0, 0, 0];
     const initialTree = input[y][x];
 
