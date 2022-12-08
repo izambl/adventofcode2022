@@ -38,57 +38,41 @@ for (let y = 0; y < input.length; y++) {
     const treeScore = [0, 0, 0, 0];
     const initialTree = input[y][x];
 
-    let left = x - 1;
-    let right = x + 1;
-    let up = y - 1;
-    let down = y + 1;
+    let left = x;
+    let right = x;
+    let up = y;
+    let down = y;
 
-    let currentTree = input[up]?.[x];
+    let currentTree = input[--up]?.[x];
     while (currentTree !== undefined) {
       treeScore[0] += 1;
       if (currentTree >= initialTree) break;
 
-      up--;
-      const nextTree = input[up]?.[x];
-
-      if (nextTree === undefined) break;
-      currentTree = nextTree;
+      currentTree = input[--up]?.[x];
     }
 
-    currentTree = input[down]?.[x];
+    currentTree = input[++down]?.[x];
     while (currentTree !== undefined) {
       treeScore[1] += 1;
       if (currentTree >= initialTree) break;
 
-      down++;
-      const nextTree = input[down]?.[x];
-
-      if (nextTree === undefined) break;
-      currentTree = nextTree;
+      currentTree = input[++down]?.[x];
     }
 
-    currentTree = input[y][right];
+    currentTree = input[y][++right];
     while (currentTree !== undefined) {
       treeScore[2] += 1;
       if (currentTree >= initialTree) break;
 
-      right++;
-      const nextTree = input[y][right];
-
-      if (nextTree === undefined) break;
-      currentTree = nextTree;
+      currentTree = input[y][++right];
     }
 
-    currentTree = input[y][left];
+    currentTree = input[y][--left];
     while (currentTree !== undefined) {
       treeScore[3] += 1;
       if (currentTree >= initialTree) break;
 
-      left--;
-      const nextTree = input[y][left];
-
-      if (nextTree === undefined) break;
-      currentTree = nextTree;
+      currentTree = input[y][--left];
     }
 
     part02 = Math.max(treeScore[0] * treeScore[1] * treeScore[2] * treeScore[3], part02);
