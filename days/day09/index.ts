@@ -60,11 +60,10 @@ function moveKnot(headPos: [number, number], tailPos: [number, number]) {
 
 function runRope(instructions: string[][], rope: Rope): number {
   const tailPositions: { [index: string]: boolean } = { '0-0': true };
+  const head = rope.at(0);
+  const tail = rope.at(-1);
 
   for (const [direction, steps] of instructions) {
-    const head = rope.at(0);
-    const tail = rope.at(-1);
-
     for (let i = 0; i < Number(steps); i++) {
       moveHead(head, direction);
       for (let knot = 1; knot < rope.length; knot++) {
