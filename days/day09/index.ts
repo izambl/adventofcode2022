@@ -5,9 +5,6 @@ import { readInput } from '../../common/index';
 
 const input = readInput('days/day09/input02', '\n').map((line) => line.split(' '));
 
-const tailPositionsPart01: { [index: string]: boolean } = { '0-0': true };
-const tailPositionsPart02: { [index: string]: boolean } = { '0-0': true };
-
 type Rope = [number, number][];
 const ropePart01: Rope = [...Array(2)].map(() => [0, 0]);
 const ropePart02: Rope = [...Array(10)].map(() => [0, 0]);
@@ -61,36 +58,27 @@ function moveKnot(headPos: [number, number], tailPos: [number, number]) {
   }
 }
 
-// Part 01
-for (const [direction, steps] of input) {
-  const head = ropePart01.at(0);
-  const tail = ropePart01.at(-1);
+function runRope(instructions: string[][], rope: Rope): number {
+  const tailPositions: { [index: string]: boolean } = { '0-0': true };
 
-  for (let i = 0; i < Number(steps); i++) {
-    moveHead(head, direction);
-    for (let knot = 1; knot < ropePart01.length; knot++) {
-      moveKnot(ropePart01.at(knot - 1), ropePart01.at(knot));
+  for (const [direction, steps] of instructions) {
+    const head = rope.at(0);
+    const tail = rope.at(-1);
+
+    for (let i = 0; i < Number(steps); i++) {
+      moveHead(head, direction);
+      for (let knot = 1; knot < rope.length; knot++) {
+        moveKnot(rope.at(knot - 1), rope.at(knot));
+      }
+      tailPositions[`${tail[0]}-${tail[1]}`] = true;
     }
-    tailPositionsPart01[`${tail[0]}-${tail[1]}`] = true;
   }
+
+  return Object.keys(tailPositions).length;
 }
 
-// Part 02
-for (const [direction, steps] of input) {
-  const head = ropePart02.at(0);
-  const tail = ropePart02.at(-1);
-
-  for (let i = 0; i < Number(steps); i++) {
-    moveHead(head, direction);
-    for (let knot = 1; knot < ropePart02.length; knot++) {
-      moveKnot(ropePart02.at(knot - 1), ropePart02.at(knot));
-    }
-    tailPositionsPart02[`${tail[0]}-${tail[1]}`] = true;
-  }
-}
-
-const part01 = Object.keys(tailPositionsPart01).length;
-const part02 = Object.keys(tailPositionsPart02).length;
+const part01 = runRope(input, ropePart01);
+const part02 = runRope(input, ropePart02);
 
 process.stdout.write(`Part 01: ${part01}\n`);
 process.stdout.write(`Part 02: ${part02}\n`);
