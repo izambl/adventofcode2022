@@ -3,7 +3,9 @@
 
 import { readInput } from '../../common/index';
 
-const input = readInput('days/day11/input01', '\n\n');
+const input = readInput('days/day11/input02', '\n\n');
+
+let globalModule = 1;
 
 class Monkey {
   name: string;
@@ -56,10 +58,13 @@ class Monkey {
     process.stdout.write(` =>  ${newWorry}`);
     const nextMonkey = newWorry % this.test === 0 ? this.ifTrue : this.ifFalse;
 
+    if (this.ifFalse && this.breath == 1) {
+      newWorry = newWorry % globalModule;
+    }
+
     process.stdout.write(` ... ${nextMonkey}\n`);
     this.monkeys[nextMonkey].catchItem(newWorry);
     this.itemsInspected++;
-    this.operate(item);
   }
 
   operate(item: number): number {
@@ -71,7 +76,7 @@ class Monkey {
     if (o === '*') {
       return Math.floor((left * right) / this.breath);
     } else {
-      return Math.floor(left + right / this.breath);
+      return Math.floor((left + right) / this.breath);
     }
   }
 }
@@ -113,6 +118,8 @@ for (const monkeyDefinition of input) {
   );
 }
 
+globalModule = monkeysPart01.reduce((total: number, monkey: Monkey) => total * monkey.test, globalModule);
+
 // Part01
 let part01Rounds = 20;
 while (part01Rounds--) {
@@ -124,7 +131,7 @@ const itemsProcessed01 = monkeysPart01.map((monkey: Monkey) => monkey.itemsInspe
 const part01 = itemsProcessed01[0] * itemsProcessed01[1];
 
 // Part01
-let rounds = 20;
+let rounds = 10_000;
 while (rounds--) {
   for (const monkey of monkeysPart02) {
     monkey.processTurn();
