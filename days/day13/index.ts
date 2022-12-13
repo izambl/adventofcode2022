@@ -40,7 +40,7 @@ function compare(left: Packet, right: Packet): boolean {
   return;
 }
 
-const part01 = input.reduce((total, [left, right]: [Packet, Packet], index) => {
+const part01 = JSON.parse(JSON.stringify(input)).reduce((total: number, [left, right]: [Packet, Packet], index: number) => {
   const result = compare(left, right);
   if (result) {
     return total + index + 1;
@@ -48,5 +48,40 @@ const part01 = input.reduce((total, [left, right]: [Packet, Packet], index) => {
   return total;
 }, 0);
 
+const allPackets = JSON.parse(JSON.stringify(input)).reduce(
+  (total: Packet[], [left, right]: [Packet, Packet]) => {
+    return [...total, left, right];
+  },
+  [[[2]], [[6]]]
+);
+
+const ValidLefts: { [index: number]: number[] } = {};
+for (let i = 0; i < allPackets.length; i++) {
+  const right = allPackets[i];
+  ValidLefts[i] ??= [];
+
+  for (let j = 0; j < allPackets.length; j++) {
+    if (i === j) continue;
+    const left = allPackets[j];
+
+    if (compare(JSON.parse(JSON.stringify(left)), JSON.parse(JSON.stringify(right)))) {
+      ValidLefts[i].push(j);
+    }
+  }
+}
+
+const orderedPoints = [];
+while (Object.keys(ValidLefts).length) {
+  const nextPoint = Number(Object.keys(ValidLefts).find((key) => ValidLefts[Number(key)].length === 0));
+  orderedPoints.push(nextPoint);
+  delete ValidLefts[nextPoint];
+
+  for (const objKey of Object.keys(ValidLefts)) {
+    ValidLefts[Number(objKey)].splice(ValidLefts[Number(objKey)].indexOf(nextPoint), 1);
+  }
+}
+
+const part02 = (orderedPoints.indexOf(0) + 1) * (orderedPoints.indexOf(1) + 1);
+
 process.stdout.write(`Part 01: ${part01}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+process.stdout.write(`Part 02: ${part02}\n`);

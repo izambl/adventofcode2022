@@ -16,7 +16,7 @@
     "day10": "ts-node ./days/day10/index",
     "day11": "ts-node ./days/day11/index",
     "day12": "ts-node ./days/day12/index",
-    "day13": "ts-node ./days/day13/index"
+    "day13": "node -r ts-node/register --max-old-space-size=24000 ./days/day13/index"
   },
   "author": "Ismael b. <ismael@recursivamente.com>",
   "license": "ISC",
