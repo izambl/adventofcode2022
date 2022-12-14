@@ -8,11 +8,10 @@ const input = readInput('days/day14/input02', '\n').map((pair) => pair.split(' -
 type Point = [number, number];
 const sandStartPoint: Point = [500, 0];
 enum Status {
-  Empty = 1,
   Rock = 2,
   Sand = 3,
 }
-const mapWithoutFloor: { [index: string]: Status } = {};
+const mapPart01: { [index: string]: Status } = {};
 
 // Fill Map
 for (const structure of input) {
@@ -20,32 +19,32 @@ for (const structure of input) {
     let [fromX, fromY] = structure[i - 1].split(',').map(Number);
     let [toX, toY] = structure[i].split(',').map(Number);
 
-    mapWithoutFloor[`${fromX}|${fromY}`] = Status.Rock;
-    mapWithoutFloor[`${toX}|${toY}`] = Status.Rock;
+    mapPart01[`${fromX}|${fromY}`] = Status.Rock;
+    mapPart01[`${toX}|${toY}`] = Status.Rock;
 
     while (fromX < toX) {
       fromX++;
-      mapWithoutFloor[`${fromX}|${fromY}`] = Status.Rock;
+      mapPart01[`${fromX}|${fromY}`] = Status.Rock;
     }
     while (fromX > toX) {
       fromX--;
-      mapWithoutFloor[`${fromX}|${fromY}`] = Status.Rock;
+      mapPart01[`${fromX}|${fromY}`] = Status.Rock;
     }
     while (fromY < toY) {
       fromY++;
-      mapWithoutFloor[`${fromX}|${fromY}`] = Status.Rock;
+      mapPart01[`${fromX}|${fromY}`] = Status.Rock;
     }
     while (fromY > toY) {
       fromY--;
-      mapWithoutFloor[`${fromX}|${fromY}`] = Status.Rock;
+      mapPart01[`${fromX}|${fromY}`] = Status.Rock;
     }
   }
 }
 
-const mapWithFloor = JSON.parse(JSON.stringify(mapWithoutFloor));
+const mapPart02 = JSON.parse(JSON.stringify(mapPart01));
 
 const lastY = Math.max(
-  ...Object.keys(mapWithoutFloor).map((points) => {
+  ...Object.keys(mapPart01).map((points) => {
     const [, y] = points.split('|');
     return Number(y);
   })
@@ -53,48 +52,47 @@ const lastY = Math.max(
 const floor = lastY + 2;
 
 let bottomReached = false;
-let part01Sands = 0;
+let part01SandCount = 0;
 while (!bottomReached) {
-  part01Sands++;
+  part01SandCount++;
   const sand: Point = [...sandStartPoint];
 
-  while (moveSand(sand)) {}
+  while (sand[1] < lastY && moveSand(sand, mapPart01)) {}
 
-  mapWithoutFloor[`${sand[0]}|${sand[1]}`] = Status.Sand;
+  mapPart01[`${sand[0]}|${sand[1]}`] = Status.Sand;
+  if (sand[1] >= lastY) bottomReached = true;
 }
 
 let canFall = true;
-let part02Sands = 0;
+let part02SandCount = 0;
 while (canFall) {
-  part02Sands++;
+  part02SandCount++;
   const sand: Point = [...sandStartPoint];
 
-  while (moveSand2(sand)) {}
+  while (sand[1] + 1 !== floor && moveSand(sand, mapPart02)) {}
 
-  mapWithFloor[`${sand[0]}|${sand[1]}`] = Status.Sand;
+  mapPart02[`${sand[0]}|${sand[1]}`] = Status.Sand;
   if (sand[0] === sandStartPoint[0] && sand[1] === sandStartPoint[1]) canFall = false;
 }
 
-function moveSand2(sand: Point): boolean {
+function moveSand(sand: Point, map: { [index: string]: Status }): boolean {
   const [x, y] = sand;
 
-  if (y + 1 === floor) return false;
-
-  let tryPos = mapWithFloor[`${x}|${y + 1}`];
-  if (!tryPos || tryPos === Status.Empty) {
+  let tryPos = map[`${x}|${y + 1}`];
+  if (!tryPos) {
     sand[1] = y + 1;
     return true;
   }
 
-  tryPos = mapWithFloor[`${x - 1}|${y + 1}`];
-  if (!tryPos || tryPos === Status.Empty) {
+  tryPos = map[`${x - 1}|${y + 1}`];
+  if (!tryPos) {
     sand[1] = y + 1;
     sand[0] = x - 1;
     return true;
   }
 
-  tryPos = mapWithFloor[`${x + 1}|${y + 1}`];
-  if (!tryPos || tryPos === Status.Empty) {
+  tryPos = map[`${x + 1}|${y + 1}`];
+  if (!tryPos) {
     sand[1] = y + 1;
     sand[0] = x + 1;
     return true;
@@ -103,36 +101,5 @@ function moveSand2(sand: Point): boolean {
   return false;
 }
 
-function moveSand(sand: Point): boolean {
-  const [x, y] = sand;
-
-  if (y > lastY) {
-    bottomReached = true;
-    return false;
-  }
-
-  let tryPos = mapWithoutFloor[`${x}|${y + 1}`];
-  if (!tryPos || tryPos === Status.Empty) {
-    sand[1] = y + 1;
-    return true;
-  }
-
-  tryPos = mapWithoutFloor[`${x - 1}|${y + 1}`];
-  if (!tryPos || tryPos === Status.Empty) {
-    sand[1] = y + 1;
-    sand[0] = x - 1;
-    return true;
-  }
-
-  tryPos = mapWithoutFloor[`${x + 1}|${y + 1}`];
-  if (!tryPos || tryPos === Status.Empty) {
-    sand[1] = y + 1;
-    sand[0] = x + 1;
-    return true;
-  }
-
-  return false;
-}
-
-process.stdout.write(`Part 01: ${part01Sands - 1}\n`);
-process.stdout.write(`Part 01: ${part02Sands}\n`);
+process.stdout.write(`Part 01: ${part01SandCount - 1}\n`);
+process.stdout.write(`Part 01: ${part02SandCount}\n`);
