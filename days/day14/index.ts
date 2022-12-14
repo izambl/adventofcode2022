@@ -3,7 +3,7 @@
 
 import { readInput } from '../../common/index';
 
-const input = readInput('days/day14/input02', '\n').map((pair) => pair.split(' -> '));
+const input = readInput('days/day14/input01', '\n').map((pair) => pair.split(' -> '));
 
 type Point = [number, number];
 const sandStartPoint: Point = [500, 0];
@@ -100,6 +100,49 @@ function moveSand(sand: Point, map: { [index: string]: Status }): boolean {
 
   return false;
 }
+
+function printMap(map: { [index: string]: Status }) {
+  const mapToPrint: string[][] = [];
+  const lowerX = Math.min(
+    ...Object.keys(mapPart01).map((points) => {
+      const [x] = points.split('|');
+      return Number(x);
+    })
+  );
+
+  let maxX = 0;
+  let minX = 0;
+
+  for (const key of Object.keys(map)) {
+    const [x, y] = key.split('|').map(Number);
+
+    maxX = Math.max(maxX, x - lowerX);
+    minX = Math.min(minX, x - lowerX);
+
+    mapToPrint[y] = mapToPrint[y] || [];
+    mapToPrint[y][x - lowerX] = map[key] === Status.Rock ? '⬜️' : '🟨';
+  }
+
+  process.stdout.write('⬛️'.repeat(maxX - minX + 5));
+  for (let y = 0; y < mapToPrint.length; y++) {
+    process.stdout.write('\n');
+    if (!mapToPrint[y]) {
+      process.stdout.write('⬛️'.repeat(maxX - minX + 5));
+      continue;
+    }
+    for (let x = minX - 2; x < maxX + 3; x++) {
+      if (!mapToPrint[y]?.[x]) {
+        process.stdout.write('⬛️');
+        continue;
+      }
+      process.stdout.write(mapToPrint[y]?.[x]);
+    }
+  }
+  process.stdout.write('\n');
+}
+
+printMap(mapPart01);
+printMap(mapPart02);
 
 process.stdout.write(`Part 01: ${part01SandCount - 1}\n`);
 process.stdout.write(`Part 01: ${part02SandCount}\n`);
