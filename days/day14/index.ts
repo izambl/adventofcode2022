@@ -43,14 +43,13 @@ for (const structure of input) {
 
 const mapPart02 = JSON.parse(JSON.stringify(mapPart01));
 
+// Part 01
 const lastY = Math.max(
   ...Object.keys(mapPart01).map((points) => {
     const [, y] = points.split('|');
     return Number(y);
   })
 );
-const floor = lastY + 2;
-
 let bottomReached = false;
 let part01SandCount = 0;
 while (!bottomReached) {
@@ -63,8 +62,10 @@ while (!bottomReached) {
   if (sand[1] >= lastY) bottomReached = true;
 }
 
+// Part 01
 let canFall = true;
 let part02SandCount = 0;
+const floor = lastY + 2;
 while (canFall) {
   part02SandCount++;
   const sand: Point = [...sandStartPoint];
@@ -78,27 +79,18 @@ while (canFall) {
 function moveSand(sand: Point, map: { [index: string]: Status }): boolean {
   const [x, y] = sand;
 
-  let tryPos = map[`${x}|${y + 1}`];
-  if (!tryPos) {
-    sand[1] = y + 1;
-    return true;
-  }
-
-  tryPos = map[`${x - 1}|${y + 1}`];
-  if (!tryPos) {
-    sand[1] = y + 1;
-    sand[0] = x - 1;
-    return true;
-  }
-
-  tryPos = map[`${x + 1}|${y + 1}`];
-  if (!tryPos) {
-    sand[1] = y + 1;
-    sand[0] = x + 1;
-    return true;
-  }
-
-  return false;
+  return [
+    [x, y + 1],
+    [x - 1, y + 1],
+    [x + 1, y + 1],
+  ].some(([newX, newY]) => {
+    if (!map[`${newX}|${newY}`]) {
+      sand[0] = newX;
+      sand[1] = newY;
+      return true;
+    }
+    return false;
+  });
 }
 
 function printMap(map: { [index: string]: Status }) {
