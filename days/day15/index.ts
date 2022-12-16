@@ -3,13 +3,13 @@
 
 import { readInput } from '../../common/index';
 
-const input = readInput('days/day15/input01', '\n').map((sensorDescription) => {
+const input = readInput('days/day15/input02', '\n').map((sensorDescription) => {
   const [, sX, sY, bX, bY] = sensorDescription.match(/x=(-?\d+).+y=(-?\d+).+x=(-?\d+).+y=(-?\d+)/);
 
   return [sX, sY, bX, bY].map(Number);
 });
-const beaconLine = 10;
-const maxCoordinate = 20;
+const beaconLine = 2000000;
+const maxCoordinate = 4000000;
 
 type Map = { [index: string]: string };
 const map: Map = {};
@@ -48,23 +48,34 @@ for (const sensor of input) {
   sensorDistances.push({ x: sX, y: sY, distance });
 }
 
-let rogueBeacon: [number, number] = [0, 0];
-let found = false;
-for (let x = 0; x <= maxCoordinate; x++) {
-  if (found) break;
-  for (let y = 0; y <= maxCoordinate; y++) {
-    found = sensorDistances.every((sensor) => {
-      const distanceToPos = Math.abs(x - sensor.x) + Math.abs(y - sensor.y);
-      return distanceToPos > sensor.distance;
-    });
+const rogueBeacon = [0, 0];
 
-    if (found) {
-      rogueBeacon[0] = x;
-      rogueBeacon[1] = y;
-      break;
+sensorDistances.find((sensorDistance) => {
+  const { y, x, distance } = sensorDistance;
+
+  for (let spacer = distance + 1; spacer >= 0; spacer--) {
+    const bottomRight = [x + spacer, y + (distance + 1 - spacer)];
+    const topRight = [x + spacer, y - (distance + 1 - spacer)];
+    const bottomLeft = [x - spacer, y + (distance + 1 - spacer)];
+    const topLeft = [x - spacer, y - (distance + 1 - spacer)];
+    const points = [bottomRight, topRight, bottomLeft, topLeft];
+
+    for (const [pX, pY] of points) {
+      if (pX < 0 || pY < 0 || pX > maxCoordinate || pY > maxCoordinate) continue;
+
+      const found = sensorDistances.every((sensor) => {
+        const distanceToPos = Math.abs(pX - sensor.x) + Math.abs(pY - sensor.y);
+        return distanceToPos > sensor.distance;
+      });
+
+      if (found) {
+        rogueBeacon[0] = pX;
+        rogueBeacon[1] = pY;
+        return true;
+      }
     }
   }
-}
+});
 
 const part01 = Object.keys(blockedRegions).length;
 const part02 = rogueBeacon[0] * 4000000 + rogueBeacon[1];
