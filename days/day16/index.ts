@@ -54,10 +54,12 @@ function getShortestPathToValve(from: string, to: string): [number, string[]] {
   return completePaths.sort(([a], [b]) => a - b).at(0);
 }
 
+let relevantValves = ['AA', ...Object.keys(valves).filter((name) => !!valves[name].rate)];
+
 // Fill paths to valves
-for (const v of Object.keys(valves)) {
+for (const v of relevantValves) {
   const valve = valves[v];
-  for (const vv of Object.keys(valves)) {
+  for (const vv of relevantValves) {
     if (vv === v) continue;
     const [distance, path] = getShortestPathToValve(v, vv);
 
@@ -65,51 +67,25 @@ for (const v of Object.keys(valves)) {
   }
 }
 
-const maxMinutes = 30;
-let currentValve = 'AA';
-let minutes = maxMinutes;
-let pressureFomOpenValves = 0;
-let totalPressureReleased = 0;
-console.log(`Start in valve ${currentValve}  -- minute ${minutes}`);
-while (minutes > 0) {
-  totalPressureReleased += pressureFomOpenValves;
-  const valve = valves[currentValve];
+let part01 = 0;
+function walkToValves(currentValve: string, minutes: number, pressionReleased: number, pressionFromValves: number, openedValves: string[]) {
+  for (const nextValve of relevantValves) {
+    if (openedValves.includes(nextValve)) continue;
 
-  const valvePotentials: [string, number][] = Object.keys(valves).map((name) => {
-    if (name === currentValve) return [name, 0];
+    const distanceToValve = valves[currentValve].pathTo[nextValve].distance;
+    const minutesToOpen = distanceToValve + 1;
 
-    // If there's no time to reach the valve and open it
-    if (minutes - valve.pathTo[name].distance - 1 < 0) return [name, 0];
+    if (minutes - minutesToOpen < 0) continue;
 
-    // If valve is open, then potential = 1
-    const rate = valves[name].status ? 0 : valves[name].rate;
-    // Potential is the pressure released during the rest of the minutes afrer getting there
-    const valvePotential = (minutes - valve.pathTo[name].distance - 1) * rate;
+    const newPressionReleased = pressionReleased + pressionFromValves * minutesToOpen;
+    const newPressureFromValves = pressionFromValves + valves[nextValve].rate;
 
-    return [name, valvePotential];
-  });
-
-  const [nextValveToOpen, nextPotential] = valvePotentials.sort(([, a], [, b]) => b - a).at(0);
-
-  if (nextPotential === 0) {
-    totalPressureReleased += pressureFomOpenValves * minutes;
-    break;
+    walkToValves(nextValve, minutes - minutesToOpen, newPressionReleased, newPressureFromValves, [...openedValves, nextValve]);
   }
 
-  // Walk to the valve
-  minutes -= valve.pathTo[nextValveToOpen].distance;
-  currentValve = nextValveToOpen;
-
-  console.log(`Walk from ${valve.name} to ${nextValveToOpen}:${valve.pathTo[nextValveToOpen].distance}  -- minute ${minutes}`);
-
-  // Open the valve
-  if (valves[nextValveToOpen].status === false) {
-    pressureFomOpenValves += valves[nextValveToOpen].rate;
-    valves[nextValveToOpen].status = true;
-    minutes--;
-    console.log(`Open valve ${nextValveToOpen}  -- minute ${minutes}`);
-  }
+  part01 = Math.max(part01, pressionReleased + pressionFromValves * minutes);
 }
+walkToValves('AA', 30, 0, 0, ['AA']);
 
-process.stdout.write(`Part 01: ${totalPressureReleased}\n`);
+process.stdout.write(`Part 01: ${part01}\n`);
 process.stdout.write(`Part 02: ${2}\n`);
