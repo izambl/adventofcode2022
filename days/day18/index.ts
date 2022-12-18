@@ -13,13 +13,13 @@ type CubesMap = {
   [index: string]: CubeType;
 };
 
-const cubes: Cube[] = readInput('days/day18/input01', '\n').map((line) => {
+const cubes: Cube[] = readInput('days/day18/input02', '\n').map((line) => {
   const [x, y, z] = line.split(',').map(Number);
 
   return [x, y, z];
 });
 
-const cubesMap: CubesMap = readInput('days/day18/input01', '\n').reduce((map: CubesMap, line: string) => {
+const cubesMap: CubesMap = readInput('days/day18/input02', '\n').reduce((map: CubesMap, line: string) => {
   const [x, y, z] = line.split(',');
   map[`${x}|${y}|${z}`] = CubeType.Lava;
   return map;
@@ -54,13 +54,13 @@ for (let x = mapXLimits[0]; x <= mapXLimits[1]; x++) {
     for (let z = mapZLimits[0]; z <= mapZLimits[1]; z++) {
       const cubeKey = `${x}|${y}|${z}`;
       cubesMap[cubeKey] ??= CubeType.Air;
+
+      if (mapXLimits.includes(x) || mapYLimits.includes(y) || mapZLimits.includes(z)) cubesMap[cubeKey] = CubeType.OutsideAir;
     }
   }
 }
 
-const visitedCubes: { [index: string]: boolean } = {};
-function walkOutside(cube: Cube) {
-  const [x, y, z] = cube;
+function hasOutsideNeighbor([x, y, z]: Cube): boolean {
   const neighbors: Cube[] = [
     [x + 1, y, z],
     [x - 1, y, z],
@@ -70,24 +70,31 @@ function walkOutside(cube: Cube) {
     [x, y, z - 1],
   ];
 
-  for (const nextCube of neighbors) {
-    const [ncX, ncY, ncZ] = nextCube;
-    const nextCubeKey = `${ncX}|${ncY}|${ncZ}`;
+  for (const [nX, nY, nZ] of neighbors) {
+    const nCubeKey = `${nX}|${nY}|${nZ}`;
+    if (cubesMap[nCubeKey] === CubeType.OutsideAir) return true;
+  }
+  return false;
+}
 
-    if (!cubesMap[nextCubeKey]) continue;
-    if (visitedCubes[nextCubeKey]) continue;
+let outsideAirFound = true;
+while (outsideAirFound) {
+  outsideAirFound = false;
 
-    visitedCubes[nextCubeKey] = true;
+  for (let x = mapXLimits[0]; x <= mapXLimits[1]; x++) {
+    for (let y = mapYLimits[0]; y <= mapYLimits[1]; y++) {
+      for (let z = mapZLimits[0]; z <= mapZLimits[1]; z++) {
+        const cubeKey = `${x}|${y}|${z}`;
+        if (cubesMap[cubeKey] !== CubeType.Air) continue;
 
-    if (cubesMap[nextCubeKey] === CubeType.Lava) continue;
-    if (cubesMap[nextCubeKey] === CubeType.Air) cubesMap[nextCubeKey] = CubeType.OutsideAir;
-
-    walkOutside(nextCube);
+        if (hasOutsideNeighbor([x, y, z])) {
+          outsideAirFound = true;
+          cubesMap[cubeKey] = CubeType.OutsideAir;
+        }
+      }
+    }
   }
 }
-const startCube: Cube = [mapXLimits[0], mapYLimits[0], mapZLimits[0]];
-walkOutside(startCube);
-
 let outsideSides = 0;
 for (const cube of Object.keys(cubesMap)) {
   if (cubesMap[cube] !== CubeType.Lava) continue;
