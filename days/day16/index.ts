@@ -1,6 +1,7 @@
 // https://adventofcode.com/2022/day/16
 // Day 16: Proboscidea Volcanium
 
+import { max } from 'lodash';
 import { readInput } from '../../common/index';
 
 interface Valve {
@@ -16,7 +17,7 @@ interface Valve {
 }
 
 const valves: { [index: string]: Valve } = {};
-const input = readInput('days/day16/input01', '\n');
+const input = readInput('days/day16/input02', '\n');
 for (const line of input) {
   const [, valve, rate, leadsTo] = line.match(/Valve (.+) has.*rate=(\d+).*valves? (.+)/);
 
@@ -117,67 +118,62 @@ process.stdout.write(`Part 01b: ${part01b}\n`);
 
 const maxMinute = 26;
 let part02 = 0;
-function walkToValvesPair(
-  a: [string, number],
-  b: [string, number],
-  minute: number,
-  pressureReleased: number,
-  pressionFromValves: number,
-  openedValves: string[]
-) {
-  const [aName, aMinute] = a;
-  const [bName, bMinute] = b;
+function releasePressure(openedValves: { [index: number]: string[] }): number {
+  let totalReleasePressure = 0;
+  let releasePressureFromValves = 0;
+  let minute = 1;
 
-  const currentMinute = Math.min(aMinute, bMinute);
-  const elapsedMinutes = currentMinute - minute;
-  pressureReleased += elapsedMinutes * pressionFromValves;
-
-  if (aMinute === currentMinute) {
-    pressureReleased += valves[aName].rate;
-    pressionFromValves += valves[aName].rate;
-    openedValves.push(aName);
-  }
-  if (bMinute === currentMinute) {
-    pressureReleased += valves[bName].rate;
-    pressionFromValves += valves[bName].rate;
-    openedValves.push(bName);
-  }
-
-  const closedValves = relevantValves.filter((valveName) => !openedValves.includes(valveName));
-
-  if (aMinute === bMinute) {
-    for (const nextValveA of closedValves) {
-      for (const nextValveB of closedValves) {
-        if (nextValveA === nextValveB) continue;
-
-        const aOpensAt = currentMinute + valves[aName].pathTo[nextValveA].distance + 1;
-        const bOpensAt = currentMinute + valves[bName].pathTo[nextValveB].distance + 1;
-
-        if (aOpensAt > maxMinute && bOpensAt > maxMinute) continue;
-
-        walkToValvesPair([nextValveA, aOpensAt], [nextValveB, bOpensAt], currentMinute, pressureReleased, pressionFromValves, [
-          ...openedValves,
-        ]);
+  while (minute <= maxMinute) {
+    totalReleasePressure += releasePressureFromValves;
+    if (openedValves[minute]) {
+      for (const valve of openedValves[minute]) {
+        releasePressureFromValves += valves[valve].rate;
       }
     }
-  } else {
-    const [[vName], [xName, xMinute]] = aMinute < bMinute ? [a, b] : [b, a];
+    minute += 1;
+  }
+  return totalReleasePressure;
+}
 
+function walkToValvesPair(a: [string, number], b: [string, number], openedValves: { [index: number]: string[] }) {
+  const [[vName, vMinute], [xName, xMinute]] = a[1] < b[1] ? [a, b] : [b, a];
+
+  if (vMinute > maxMinute && xMinute > maxMinute) {
+    const released = releasePressure(openedValves);
+    const newMax = Math.max(part02, released);
+
+    if (part02 !== newMax) console.log(`New Max: ${newMax}`);
+
+    part02 = newMax;
+    return;
+  }
+
+  openedValves[vMinute] ??= [];
+  openedValves[vMinute].push(vName);
+
+  const openedValvesList = Object.keys(openedValves).reduce((total, minuteKey) => {
+    return [...total, ...openedValves[Number(minuteKey)]];
+  }, []);
+  const closedValves = relevantValves.filter((valveName) => !openedValvesList.includes(valveName));
+
+  if (closedValves.length === 1 && closedValves.at(0) === xName) {
+    walkToValvesPair([xName, xMinute], [xName, xMinute], JSON.parse(JSON.stringify(openedValves)));
+  } else {
     for (const nextValve of closedValves) {
       if (nextValve === xName) continue;
-
-      const opensAt = currentMinute + valves[vName].pathTo[nextValve].distance + 1;
-      if (opensAt > maxMinute && xMinute > maxMinute) continue;
-
-      walkToValvesPair([nextValve, opensAt], [xName, xMinute], currentMinute, pressureReleased, pressionFromValves, [...openedValves]);
+      const opensAt = vMinute + valves[vName].pathTo[nextValve].distance + 1;
+      walkToValvesPair([nextValve, opensAt], [xName, xMinute], JSON.parse(JSON.stringify(openedValves)));
     }
   }
 
-  pressureReleased += (maxMinute - currentMinute) * pressionFromValves;
-  if (`${openedValves}` === 'AA,DD,JJ,BB,HH,CC,EE' || `${openedValves}` === 'AA,DD,JJ,HH,BB,CC,EE') {
-    console.log('Gotcha', pressureReleased, currentMinute, pressionFromValves);
+  if (openedValvesList.length === relevantValves.length) {
+    const released = releasePressure(openedValves);
+    const newMax = Math.max(part02, released);
+
+    if (part02 !== newMax) console.log(`New Max: ${newMax}`);
+
+    part02 = newMax;
   }
-  part02 = Math.max(part02, pressureReleased);
 }
 for (const nextValveA of relevantValves) {
   if (nextValveA === 'AA') continue;
@@ -185,18 +181,10 @@ for (const nextValveA of relevantValves) {
     if (nextValveB === 'AA') continue;
     if (nextValveB === nextValveA) continue;
 
-    const aOpensAt = 2 + valves.AA.pathTo[nextValveA].distance;
-    const bOpensAt = 2 + valves.AA.pathTo[nextValveB].distance;
+    const aOpensAt = 1 + valves.AA.pathTo[nextValveA].distance;
+    const bOpensAt = 1 + valves.AA.pathTo[nextValveB].distance;
 
-    walkToValvesPair(
-      [nextValveA, aOpensAt],
-      [nextValveB, bOpensAt],
-
-      1,
-      0,
-      0,
-      ['AA']
-    );
+    walkToValvesPair([nextValveA, aOpensAt], [nextValveB, bOpensAt], { 0: ['AA'] });
   }
 }
 process.stdout.write(`Part 02: ${part02}\n`);
