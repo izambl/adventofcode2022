@@ -3,7 +3,7 @@
 
 import { readInput } from '../../common/index';
 
-const input = readInput('days/day17/input01', '\n')[0].split('');
+const input = readInput('days/day17/input02', '\n')[0].split('');
 
 type Point = [number, number];
 type RockShape = {
@@ -67,22 +67,22 @@ const rockShapes: RockShape[] = [
   },
 ];
 
-let currentShape = 0;
+let nextShape = 0;
 function getShape(): RockShape {
-  if (!rockShapes[currentShape]) {
-    currentShape = 0;
-  }
+  const shape = rockShapes[nextShape];
 
-  return rockShapes[currentShape++];
+  nextShape = rockShapes[nextShape + 1] ? nextShape + 1 : 0;
+
+  return shape;
 }
 
-let currentJet = 0;
+let nextJet = 0;
 function getJet() {
-  if (!input[currentJet]) {
-    currentJet = 0;
-  }
+  const jet = input[nextJet];
 
-  return input[currentJet++] === '<' ? -1 : 1;
+  nextJet = input[nextJet + 1] ? nextJet + 1 : 0;
+
+  return jet === '<' ? -1 : 1;
 }
 
 function growMap(height: number, map: boolean[][]) {
@@ -93,14 +93,12 @@ function growMap(height: number, map: boolean[][]) {
 }
 
 function printMap(map: boolean[][]) {
-  const mapToPrint = JSON.parse(JSON.stringify(map));
-
   console.clear();
 
-  let row = mapToPrint.pop();
-  while (row) {
-    console.log(`${row.map((point: boolean) => (point ? '#' : '.')).join('')}`);
-    row = mapToPrint.pop();
+  for (let i = map.length - 1; i >= 0; i--) {
+    const line = map[i].map((point: boolean) => (point ? '#' : '.')).join('');
+
+    console.log(line);
   }
 }
 
@@ -133,6 +131,13 @@ class Rock {
     return this.shape.points.some(([shapeX, shapeY]) => this.map[shapeY + y][shapeX + x] === true);
   }
 
+  private applyInitialJet() {
+    const jet = getJet();
+
+    if (this.x + jet > 0 && this.x + jet <= 8 - this.shape.width) this.x += jet;
+    this.y -= 1;
+  }
+
   private applyJet() {
     const jet = getJet();
 
@@ -155,6 +160,10 @@ class Rock {
 
   run() {
     let settled = false;
+    this.applyInitialJet();
+    this.applyInitialJet();
+    this.applyInitialJet();
+
     while (!settled) {
       this.applyJet();
       settled = !this.goDown();
@@ -164,19 +173,53 @@ class Rock {
   }
 }
 
-let rounds = 2022;
+const patterfinding = false;
+const patterns: { lastChanges: number[]; lastTop: number }[] = [];
+
+const pattern01 = [35, 53];
+const pattern02 = [1745, 2785];
+
+let rounds = 1000000000000;
+const pattern = pattern02;
+
+let adjustedRounds = pattern[0] + ((rounds - pattern[0]) % pattern[0]);
+
 const map = [[true, true, true, true, true, true, true, true, true]];
 let topHeight = 0;
-while (rounds--) {
+while (adjustedRounds--) {
   const rock = new Rock(3, topHeight + 4, map);
   growMap(rock.topHeigth + 1, map);
 
   rock.run();
 
   topHeight = Math.max(topHeight, rock.topHeigth);
+
+  if (!patterfinding) continue;
+  for (let i = 1; i <= 50; i++) {
+    if (rounds % i === 0) {
+      patterns[i] = patterns[i] || { lastTop: 0, lastChanges: [] };
+
+      if (patterns[i].lastTop !== 0) {
+        const change = topHeight - patterns[i].lastTop;
+        patterns[i].lastChanges.push(change);
+
+        if (patterns[i].lastChanges.length > 15) {
+          if (patterns[i].lastChanges.every((value) => value === change)) {
+            console.log('WUREKA', change, i, rounds);
+          }
+
+          patterns[i].lastChanges.shift();
+        }
+      }
+      patterns[i].lastTop = topHeight;
+    }
+  }
 }
 
-printMap(map);
+process.stdout.write(`Part 01: ${topHeight + pattern[1] * Math.floor((rounds - pattern[0]) / pattern[0])}\n`);
 
-process.stdout.write(`Part 01: ${topHeight}\n`);
-process.stdout.write(`Part 02: ${2}\n`);
+// Part02 pattern :   53 - 35    Every   35 rounds it increases 53
+// Part02 pattern : 2785 - 1745  Every 1745 rounds it increases 2785
+
+// Calvulo primeras 35, anoto Top Height
+// 2022 - 35 = restantes
