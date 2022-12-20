@@ -1,0 +1,157 @@
+// https://adventofcode.com/2022/day/19
+// Day 19: Not Enough Minerals
+
+import { readInput } from '../../common/index';
+
+enum Resources {
+  ore = 'ORE',
+  clay = 'CLAY',
+  obsidian = 'OBSIDIAN',
+  geode = 'GEODE',
+}
+type ResourceCount = { [index in Resources]?: number };
+type BluePrint = {
+  [index in Resources]: ResourceCount;
+};
+
+const bluePrints: BluePrint[] = readInput('days/day19/input02', '\n').map((blueprint): BluePrint => {
+  const [, ...costs] = blueprint.match(/costs (\d+) .+ costs (\d+) .+ costs (\d+) ore and (\d+).+ costs (\d+) ore and (\d+)/);
+
+  return {
+    [Resources.ore]: { [Resources.ore]: Number(costs.shift()) },
+    [Resources.clay]: { [Resources.ore]: Number(costs.shift()) },
+    [Resources.obsidian]: { [Resources.ore]: Number(costs.shift()), [Resources.clay]: Number(costs.shift()) },
+    [Resources.geode]: { [Resources.ore]: Number(costs.shift()), [Resources.obsidian]: Number(costs.shift()) },
+  };
+});
+
+function clone(resourceCount: ResourceCount): ResourceCount {
+  return JSON.parse(JSON.stringify(resourceCount));
+}
+
+const MAX_MINUTES = 24;
+function processBluePrint(bp: BluePrint, num: number): number {
+  const initialRobots: ResourceCount = {
+    [Resources.ore]: 1,
+    [Resources.clay]: 0,
+    [Resources.obsidian]: 0,
+    [Resources.geode]: 0,
+  };
+  const initialResources: ResourceCount = {
+    [Resources.ore]: 0,
+    [Resources.clay]: 0,
+    [Resources.obsidian]: 0,
+    [Resources.geode]: 0,
+  };
+  const maxOre = Object.keys(bp).reduce((tot: number, res: Resources) => Math.max(tot, bp[res].ORE ?? 0), 0);
+  const maxClay = Object.keys(bp).reduce((tot: number, res: Resources) => Math.max(tot, bp[res].CLAY ?? 0), 0);
+  const maxObsidian = Object.keys(bp).reduce((tot: number, res: Resources) => Math.max(tot, bp[res].OBSIDIAN ?? 0), 0);
+
+  let mg = 0;
+  let round = 0;
+  function walk(currentMinute: number, robots: ResourceCount, resources: ResourceCount, log: string): number {
+    for (let minute = currentMinute; minute <= MAX_MINUTES; minute++) {
+      round++;
+
+      if (round >= 10_000_000) return resources.GEODE;
+
+      // Calculate options
+      const multiverses: [ResourceCount, ResourceCount, string][] = [];
+
+      // Can build geode
+      if (Object.keys(bp.GEODE).every((resource: Resources) => resources[resource] >= bp.GEODE[resource])) {
+        // Gather resources
+        for (const resource of Object.values(Resources)) resources[resource] += robots[resource];
+
+        // Build geode
+        for (const resource of Object.keys(bp.GEODE) as Array<Resources>) resources[resource] -= bp.GEODE[resource];
+
+        robots.GEODE += 1;
+        log += `${minute}:G|`;
+        continue;
+      }
+
+      // Can build ore
+      if (robots.ORE < maxOre && Object.keys(bp.ORE).every((res: Resources) => resources[res] >= bp.ORE[res])) {
+        const newResources = clone(resources);
+        const newRobots = clone(robots);
+        const newLog = `${log}${minute}:O|`;
+
+        // Build ore
+        for (const resource of Object.keys(bp.ORE) as Array<Resources>) newResources[resource] -= bp.ORE[resource];
+        newRobots.ORE += 1;
+
+        // Gather resources
+        for (const resource of Object.values(Resources)) newResources[resource] += robots[resource];
+
+        multiverses.push([newRobots, newResources, newLog]);
+      }
+
+      // Can build clay
+      if (robots.CLAY < maxClay && Object.keys(bp.CLAY).every((res: Resources) => resources[res] >= bp.CLAY[res])) {
+        const newResources = clone(resources);
+        const newRobots = clone(robots);
+        const newLog = `${log}${minute}:C|`;
+
+        // Build clay
+        for (const resource of Object.keys(bp.CLAY) as Array<Resources>) newResources[resource] -= bp.CLAY[resource];
+        newRobots.CLAY += 1;
+
+        // Gather resources
+        for (const resource of Object.values(Resources)) newResources[resource] += robots[resource];
+
+        multiverses.push([newRobots, newResources, newLog]);
+      }
+
+      // Can build obsidian
+      if (robots.OBSIDIAN < maxObsidian && Object.keys(bp.OBSIDIAN).every((res: Resources) => resources[res] >= bp.OBSIDIAN[res])) {
+        const newResources = clone(resources);
+        const newRobots = clone(robots);
+        const newLog = `${log}${minute}:B|`;
+
+        // Build obsidian
+        for (const resource of Object.keys(bp.OBSIDIAN) as Array<Resources>) newResources[resource] -= bp.OBSIDIAN[resource];
+        newRobots.OBSIDIAN += 1;
+
+        // Gather resources
+        for (const resource of Object.values(Resources)) newResources[resource] += robots[resource];
+
+        multiverses.push([newRobots, newResources, newLog]);
+      }
+
+      if (multiverses.length) {
+        if (multiverses.length < 3) {
+          const newResources = clone(resources);
+          const newRobots = clone(robots);
+          const newLog = `${log}${minute}:P|`;
+
+          // Gather resources
+          for (const resource of Object.values(Resources)) newResources[resource] += robots[resource];
+
+          multiverses.push([newRobots, newResources, newLog]);
+        }
+
+        return Math.max(...multiverses.map(([bots, res, l]) => walk(minute + 1, bots, res, l)));
+      }
+
+      // Gather resources
+      for (const resource of Object.values(Resources)) resources[resource] += robots[resource];
+    }
+
+    if (resources.GEODE > mg) {
+      mg = resources.GEODE;
+      // console.log(`New High: ${mg}`, log, round);
+    }
+    return resources.GEODE;
+  }
+
+  const result = walk(1, initialRobots, initialResources, '');
+  console.log(`Blueprint ${`0${num + 1}`.slice(-2)} found`, result);
+
+  return result;
+}
+
+const part01 = bluePrints.map((bp, index) => processBluePrint(bp, index)).reduce((total, geodes, index) => total + geodes * (index + 1), 0);
+
+process.stdout.write(`Part 01: ${part01}\n`);
+process.stdout.write(`Part 02: ${2}\n`);
