@@ -102,7 +102,6 @@ function solveFor(monkey: string, eq: string): string {
   } else {
     return solveFor(r, eq.replace(monkey, `(${monkeyVal(l)}${o}${r})`));
   }
-  return '';
 }
 function splitEq(eq: string): [string, string, string] {
   const rest = eq.substring(eq.indexOf('('), eq.lastIndexOf(')') + 1);
@@ -143,3 +142,6 @@ const equation = solveFor(startMonkey, `${startMonkey}=${searchedValue}`);
 const part02 = solveEquation(equation).split('=').at(1);
 
 process.stdout.write(`Part 02: ${part02}\n`);
+
+// Using https://www.mathpapa.com/equation-solver/
+// (634+(101692068627800-(((((2*(516+((868+(((((2*(((((99+((((2*((((((((((((((5*(((268+(((76+((((((((837+((((337+((((2*(((674+((((137+x)/3)-467)*81))/2)-387))-865)+365)/8))*11)-215)/4))*4)+998)*2)-794)/2)-602)*2))/2)-414))/7)+614))+81)*2)-562)/6)-829)*3)+173)/7)+871)/6)-888)*40)-128))+519)+941)/12))*9)-582)/4)+844))-191)/3)-386)/5))*15)))-338)/4)+88)*3)))=8720624963457
