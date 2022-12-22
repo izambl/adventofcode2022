@@ -70,7 +70,7 @@ function valueFromOpp(left: string | number, right: string | number, operator: s
     // find right
     switch (operator) {
       case '+':
-        result = value - Number(left);
+        result = Number(left) - value;
         break;
       case '-':
         result = value + Number(left);
@@ -108,15 +108,15 @@ function splitEq(eq: string): [string, string, string] {
   const req = eq.replace(rest, '');
 
   if (rest === '') {
-    const [, l, o, r] = eq.match(/(.+)([+-/*])(.+)/);
+    const [, l, o, r] = eq.match(/(-?\d+)([+-/*])(-?\d+)/);
     return [l, o, r];
   }
 
   if (/^\d+[/+*-]$/.test(req)) {
-    const [, l, o] = req.match(/(\d+)([+-/*])/);
+    const [, l, o] = req.match(/(-?\d+)([+-/*])/);
     return [l, o, rest];
   } else {
-    const [, o, r] = req.match(/([+-/*])(\d+)/);
+    const [, o, r] = req.match(/([+-/*])(-?\d+)/);
     return [rest, o, r];
   }
 }
