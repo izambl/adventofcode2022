@@ -1,5 +1,6 @@
 // https://adventofcode.com/2022/day/21
 // Day 21: Monkey Math
+import { execSync } from 'child_process';
 
 import { readInput } from '../../common/index';
 
@@ -47,46 +48,32 @@ function requiresHuman(monkey: string): boolean {
     return false;
   }
 }
-function valueFromOpp(left: string | number, right: string | number, operator: string, value: number): number {
-  let result = 0;
-
+function valueFromOpp(left: string | number, right: string | number, operator: string, value: string): string {
   if (!Number(left)) {
     // find left
     switch (operator) {
       case '+':
-        result = value - Number(right);
-        break;
+        return `(${value}-${right}.0)`;
       case '-':
-        result = value + Number(right);
-        break;
+        return `(${value}+${right}.0)`;
       case '*':
-        result = value / Number(right);
-        break;
+        return `(${value}/${right}.0)`;
       case '/':
-        result = value * Number(right);
-        break;
+        return `(${value}*${right}.0)`;
     }
   } else {
     // find right
     switch (operator) {
       case '+':
-        result = Number(left) - value;
-        break;
+        return `(${value}-${left}.0)`;
       case '-':
-        result = value + Number(left);
-        break;
+        return `(${left}.0-${value})`;
       case '*':
-        result = value / Number(left);
-        break;
+        return `(${value}/${left}.0)`;
       case '/':
-        result = Number(left) / value;
-        break;
+        return `(${left}.0/${value})`;
     }
   }
-
-  // console.log('OPERATION', `${left} ${operator} ${right} = ${value}  ==>  ${result}`);
-
-  return result;
 }
 function solveFor(monkey: string, eq: string): string {
   const [l, o, r] = macacos[monkey] as [string, string, string];
@@ -108,7 +95,7 @@ function splitEq(eq: string): [string, string, string] {
   const req = eq.replace(rest, '');
 
   if (rest === '') {
-    const [, l, o, r] = eq.match(/(-?\d+)([+-/*])(-?\d+)/);
+    const [, l, o, r] = eq.match(/(-?\d+)([+-/*])(.+)/);
     return [l, o, r];
   }
 
@@ -128,7 +115,7 @@ function solveEquation(eq: string): string {
 
   const [l, o, r] = splitEq(op.slice(1, -1));
 
-  const newValue = valueFromOpp(l, r, o, Number(value));
+  const newValue = valueFromOpp(l, r, o, value);
   const newEq = !Number(l) ? `${l}=${newValue}` : `${r}=${newValue}`;
   console.log(`Becomes ${newEq}`);
 
@@ -139,9 +126,8 @@ const [left, , right] = macacos.root as [string, string, string];
 const [startMonkey, searchedValue] = requiresHuman(left) ? [left, monkeyVal(right)] : [right, monkeyVal(left)];
 const equation = solveFor(startMonkey, `${startMonkey}=${searchedValue}`);
 
-const part02 = solveEquation(equation).split('=').at(1);
+const part02operation = solveEquation(equation).split('=').at(1);
+
+const part02 = execSync(`echo 'print "%.0f" % ${part02operation}' | python`);
 
 process.stdout.write(`Part 02: ${part02}\n`);
-
-// Using https://www.mathpapa.com/equation-solver/
-// (634+(101692068627800-(((((2*(516+((868+(((((2*(((((99+((((2*((((((((((((((5*(((268+(((76+((((((((837+((((337+((((2*(((674+((((137+x)/3)-467)*81))/2)-387))-865)+365)/8))*11)-215)/4))*4)+998)*2)-794)/2)-602)*2))/2)-414))/7)+614))+81)*2)-562)/6)-829)*3)+173)/7)+871)/6)-888)*40)-128))+519)+941)/12))*9)-582)/4)+844))-191)/3)-386)/5))*15)))-338)/4)+88)*3)))=8720624963457
