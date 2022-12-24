@@ -14,7 +14,7 @@ type BluePrint = {
   [index in Resources]: ResourceCount;
 };
 
-const bluePrints: BluePrint[] = readInput('days/day19/input02', '\n').map((blueprint): BluePrint => {
+const bluePrints: BluePrint[] = readInput('days/day19/input01', '\n').map((blueprint): BluePrint => {
   const [, ...costs] = blueprint.match(/costs (\d+) .+ costs (\d+) .+ costs (\d+) ore and (\d+).+ costs (\d+) ore and (\d+)/);
 
   return {
@@ -29,7 +29,7 @@ function clone(resourceCount: ResourceCount): ResourceCount {
   return JSON.parse(JSON.stringify(resourceCount));
 }
 
-const MAX_MINUTES = 24;
+const MAX_MINUTES = 32;
 function processBluePrint(bp: BluePrint, num: number): number {
   const initialRobots: ResourceCount = {
     [Resources.ore]: 1,
@@ -49,20 +49,13 @@ function processBluePrint(bp: BluePrint, num: number): number {
   const maxGeode = Infinity;
 
   let mg = 0;
-  // const inFlight: { [index: number]: number } = {};
-  //let rounds = 0;
   function processDay(currentMinute: number, robots: ResourceCount, resources: ResourceCount, log: string): number {
-    //if (rounds++ % 100000 === 0) console.log(inFlight);
-
     let testGeode = resources.GEODE;
     let testRobot = robots.GEODE;
-    for (let m = currentMinute; m <= MAX_MINUTES; m++) testGeode += testRobot++;
+    for (let m = currentMinute; m <= MAX_MINUTES + 1; m++) testGeode += testRobot++;
     if (testGeode < mg) return 0;
 
     for (let minute = currentMinute; minute <= MAX_MINUTES; minute++) {
-      // inFlight[minute] ??= 0;
-      // inFlight[minute]++;
-      // Calculate options
       const multiverses: [ResourceCount, ResourceCount, string][] = [];
 
       const canBuild = {
@@ -75,7 +68,7 @@ function processBluePrint(bp: BluePrint, num: number): number {
       // Gather resources
       for (const resource of Object.values(Resources)) resources[resource] += robots[resource];
 
-      if (currentMinute === 24) break;
+      if (currentMinute === MAX_MINUTES) break;
 
       if (canBuild.GEODE) {
         for (const resource of Object.keys(bp.GEODE) as Array<Resources>) resources[resource] -= bp.GEODE[resource];
@@ -123,7 +116,6 @@ function processBluePrint(bp: BluePrint, num: number): number {
       multiverses.push([robots, resources, newLog]);
       multiverses.sort(() => 0.5 - Math.random());
 
-      // inFlight[minute]--;
       return Math.max(...multiverses.map(([bots, res, l]) => processDay(minute + 1, bots, res, l)));
     }
 
@@ -141,7 +133,10 @@ function processBluePrint(bp: BluePrint, num: number): number {
   return result;
 }
 
-const part01 = bluePrints.map((bp, index) => processBluePrint(bp, index)).reduce((total, geodes, index) => total + geodes * (index + 1), 0);
+const part01 = bluePrints
+  .slice(0, 3)
+  .map((bp, index) => processBluePrint(bp, index))
+  .reduce((total, geodes) => total * geodes, 1);
 
 process.stdout.write(`Part 01: ${part01}\n`);
 process.stdout.write(`Part 02: ${2}\n`);
