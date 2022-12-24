@@ -15,6 +15,13 @@ enum Direction {
   LEFT = 2,
 }
 
+const directionChange: { [index: string]: { [index: string]: Direction } } = {
+  [Direction.DOWN]: { R: Direction.LEFT, L: Direction.RIGHT },
+  [Direction.UP]: { R: Direction.RIGHT, L: Direction.LEFT },
+  [Direction.RIGHT]: { R: Direction.DOWN, L: Direction.UP },
+  [Direction.LEFT]: { R: Direction.UP, L: Direction.DOWN },
+};
+
 class Tile {
   type: TileType;
   up: Tile;
@@ -76,13 +83,6 @@ for (const tileKey in tilesMap) {
     tile.down = tilesMap[`${tile.position.x}|${nextYPos}`];
   }
 }
-
-const directionChange: { [index: string]: { [index: string]: Direction } } = {
-  [Direction.DOWN]: { R: Direction.LEFT, L: Direction.RIGHT },
-  [Direction.UP]: { R: Direction.RIGHT, L: Direction.LEFT },
-  [Direction.RIGHT]: { R: Direction.DOWN, L: Direction.UP },
-  [Direction.LEFT]: { R: Direction.UP, L: Direction.DOWN },
-};
 
 // Part 01 execution
 let direction = Direction.RIGHT;
