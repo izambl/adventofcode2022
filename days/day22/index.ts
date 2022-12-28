@@ -35,6 +35,14 @@ class Tile {
   }
 }
 
+class Cube {
+  top: Cube;
+  right: Cube;
+  down: Cube;
+  left: Cube;
+  tiles: Tile[][];
+}
+
 const [mapDefinition, pathDefinition] = readInput('days/day22/input02', '\n\n');
 const path = pathDefinition.match(/\d+|\D+/g);
 const map = mapDefinition.split('\n').map((line) => line.split(''));
